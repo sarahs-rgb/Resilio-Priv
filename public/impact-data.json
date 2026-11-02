@@ -1,0 +1,41 @@
+{
+  "stage": "Pre-launch transparency",
+  "peopleSupported": 0,
+  "donationsThroughResilioUsd": 0,
+  "countries": [],
+  "verifiedPartners": [],
+  "projects": [
+    {
+      "name": "Offline emergency-energy web prototype",
+      "status": "Built",
+      "state": "complete"
+    },
+    {
+      "name": "Terrain, solar, wind, and hybrid sizing",
+      "status": "Built",
+      "state": "complete"
+    },
+    {
+      "name": "Electrical label compatibility screen",
+      "status": "Built",
+      "state": "complete"
+    },
+    {
+      "name": "Formal nonprofit partnerships",
+      "status": "Outreach next",
+      "state": "pending"
+    }
+  ],
+  "independentOrganizations": [
+    {
+      "name": "GRID Alternatives",
+      "description": "An independent nonprofit expanding access to clean energy and clean-energy careers. Not currently a verified Resilio partner.",
+      "donateUrl": "https://gridalternatives.org/support"
+    },
+    {
+      "name": "Direct Relief",
+      "description": "An independent humanitarian organization supporting health and disaster response. Not currently a verified Resilio partner.",
+      "donateUrl": "https://www.directrelief.org/donate/"
+    }
+  ]
+}

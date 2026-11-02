@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Build a Tiny Planner — Coding Classroom</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #183638;
+      background: #e8eee7;
+      font-synthesis: none;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; min-height: 100vh; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 22px;
+      color: #f5f8f2;
+      background: #173b3b;
+    }
+    .brand { font-weight: 850; }
+    .brand span { display: block; color: #bfd2c8; font-size: 12px; font-weight: 550; }
+    .topbar a { color: #f5cf68; font-size: 13px; font-weight: 750; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(230px, .75fr) minmax(340px, 1.2fr) minmax(300px, 1fr);
+      gap: 14px;
+      max-width: 1600px;
+      min-height: calc(100vh - 60px);
+      margin: 0 auto;
+      padding: 14px;
+    }
+    .panel {
+      min-width: 0;
+      border: 1px solid #d5ddd2;
+      border-radius: 14px;
+      background: #fffdf7;
+      box-shadow: 0 8px 26px rgb(26 56 48 / 7%);
+    }
+    .lesson-panel, .editor-panel, .preview-panel { padding: 17px; }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: #397269;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: 22px; line-height: 1.18; }
+    h2 { margin: 0; font-size: 17px; }
+    h3 { margin: 19px 0 6px; font-size: 13px; }
+    p { line-height: 1.48; }
+    .lesson-intro { color: #5b6d68; font-size: 12px; }
+
+    .lesson-list { display: grid; gap: 7px; margin: 17px 0; }
+    .lesson-choice {
+      padding: 10px;
+      border: 1px solid #d5ddd2;
+      border-radius: 10px;
+      background: #fff;
+      color: #183638;
+      text-align: left;
+    }
+    .lesson-choice[aria-current="step"] { border-color: #1d716a; background: #eef4ed; box-shadow: inset 3px 0 #1d716a; }
+    .lesson-choice strong, .lesson-choice span { display: block; }
+    .lesson-choice strong { font-size: 12px; }
+    .lesson-choice span { margin-top: 3px; color: #697a75; font-size: 10px; }
+    .lesson-copy, .reference-card {
+      margin-top: 12px;
+      padding: 11px;
+      border: 1px solid #d5ddd2;
+      border-radius: 10px;
+      background: #f3f6ef;
+      color: #415b55;
+      font-size: 12px;
+    }
+    .lesson-copy ol { padding-left: 18px; }
+    .lesson-copy li { margin: 7px 0; }
+    .lesson-copy code, .reference-card code {
+      border-radius: 4px;
+      background: #e4ebe2;
+      padding: 1px 4px;
+    }
+    .reference-card { background: #fff7df; border-color: #ead89e; }
+    .reference-card a { color: #185e55; font-weight: 800; }
+
+    .editor-head, .preview-head, .editor-tabs, .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .editor-head, .preview-head { margin-bottom: 12px; }
+    .editor-head p, .preview-head p { margin: 4px 0 0; color: #697a75; font-size: 11px; }
+    .editor-tabs { justify-content: flex-start; margin: 8px 0 0; }
+    .tab, .secondary, .run {
+      border: 1px solid #cbd6cc;
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: #eef2e8;
+      color: #183638;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .tab[aria-selected="true"] { border-color: #173b3b; background: #173b3b; color: white; }
+    .run { border-color: #e2bc47; background: #f3cf67; }
+    .code-editor {
+      display: block;
+      width: 100%;
+      min-height: 54vh;
+      resize: vertical;
+      padding: 14px;
+      border: 1px solid #254d5a;
+      border-radius: 10px;
+      background: #102333;
+      color: #e4f0e9;
+      font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .code-editor:focus { outline: 3px solid #f3cf67; outline-offset: 2px; }
+    .editor-hint { min-height: 32px; margin: 8px 0 0; color: #697a75; font-size: 10px; }
+    .actions { justify-content: flex-start; flex-wrap: wrap; margin-top: 10px; }
+    .feedback { min-height: 22px; margin: 8px 0 0; color: #176a58; font-size: 11px; font-weight: 750; }
+
+    .preview-frame {
+      display: block;
+      width: 100%;
+      height: 54vh;
+      min-height: 320px;
+      border: 1px solid #d5ddd2;
+      border-radius: 10px;
+      background: white;
+    }
+    .preview-note { margin: 9px 0 0; color: #697a75; font-size: 10px; }
+    .concept-note {
+      margin-top: 12px;
+      padding: 10px;
+      border-left: 4px solid #d6a82e;
+      border-radius: 0 9px 9px 0;
+      background: #fff4d6;
+      color: #604f22;
+      font-size: 10px;
+    }
+
+    @media (max-width: 1050px) {
+      .workspace { grid-template-columns: minmax(220px, .7fr) minmax(330px, 1fr); }
+      .preview-panel { grid-column: 1 / -1; }
+      .preview-frame { height: 45vh; }
+    }
+    @media (max-width: 680px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .workspace { grid-template-columns: 1fr; padding: 9px; }
+      .preview-panel { grid-column: auto; }
+      .code-editor { min-height: 38vh; }
+      .preview-frame { height: 42vh; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Build a Tiny Planner<span>A beginner coding classroom inspired by Resilio</span></div>
+    <a href="../public/resilio.html#build" target="_blank" rel="noopener noreferrer">Open the original app ↗</a>
+  </header>
+
+  <main class="workspace">
+    <section class="panel lesson-panel" aria-labelledby="classroomTitle">
+      <p class="eyebrow">Learn by building</p>
+      <h1 id="classroomTitle">Your code, your planner</h1>
+      <p class="lesson-intro">Start with a blank page. Add structure, style, and behavior one small lesson at a time.</p>
+      <nav class="lesson-list" id="lessonList" aria-label="Coding lessons"></nav>
+      <article class="lesson-copy" aria-live="polite">
+        <h2 id="lessonTitle"></h2>
+        <p id="lessonGoal"></p>
+        <ol id="lessonTasks"></ol>
+        <div><strong>In plain English:</strong> <span id="lessonConcept"></span></div>
+      </article>
+      <aside class="reference-card">
+        <strong>How this relates to Resilio</strong>
+        <p id="lessonReference"></p>
+        <a id="sourceLink" href="../public/resilio.html" target="_blank" rel="noopener noreferrer">See the original source ↗</a>
+      </aside>
+      <div class="concept-note"><strong>Learning sandbox:</strong> this small app teaches web coding. It does not model, recommend, or approve real electrical equipment or connections.</div>
+    </section>
+
+    <section class="panel editor-panel" aria-labelledby="editorTitle">
+      <div class="editor-head">
+        <div><p class="eyebrow">The code editor</p><h2 id="editorTitle">Edit one file</h2><p id="fileDescription"></p></div>
+        <button class="run" id="runCode" type="button">Run preview</button>
+      </div>
+      <div class="editor-tabs" role="tablist" aria-label="Code files">
+        <button class="tab" id="tabHtml" type="button" role="tab" aria-selected="true" aria-controls="codeEditor">HTML</button>
+        <button class="tab" id="tabCss" type="button" role="tab" aria-selected="false" aria-controls="codeEditor">CSS</button>
+        <button class="tab" id="tabJs" type="button" role="tab" aria-selected="false" aria-controls="codeEditor">JavaScript</button>
+      </div>
+      <label class="eyebrow" for="codeEditor" id="editorLabel">HTML file</label>
+      <textarea class="code-editor" id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Editable lesson source code"></textarea>
+      <p class="editor-hint" id="editorHint"></p>
+      <div class="actions">
+        <button class="secondary" id="checkLesson" type="button">Check my code</button>
+        <button class="secondary" id="resetLesson" type="button">Reset this lesson</button>
+        <button class="secondary" id="nextLesson" type="button">Next lesson</button>
+      </div>
+      <p class="feedback" id="feedback" aria-live="polite"></p>
+    </section>
+
+    <section class="panel preview-panel" aria-labelledby="previewTitle">
+      <div class="preview-head">
+        <div><p class="eyebrow">See what your code does</p><h2 id="previewTitle">Live preview</h2><p>Press “Run preview” after editing.</p></div>
+      </div>
+      <iframe class="preview-frame" id="previewFrame" title="Isolated preview of your lesson code" sandbox="allow-scripts"></iframe>
+      <p class="preview-note">The preview is isolated from this classroom and cannot access its files or saved data.</p>
+    </section>
+  </main>
+
+  <script>
+    const lessons = [
+      {
+        title: '1. Build the page skeleton',
+        short: 'HTML: give a page structure',
+        goal: 'Create a tiny planner page with a heading and one sentence.',
+        tasks: [
+          'Add a <main> element. It holds the main content of this page.',
+          'Inside it, add an <h1> heading with your own planner name.',
+          'Add a <p> paragraph that tells someone what your planner is for.',
+          'Press Run preview. When you can see your page, check your code.'
+        ],
+        concept: 'HTML describes the meaning and structure of content. Tags such as <main>, <h1>, and <p> tell the browser what each piece is.',
+        reference: 'The original Resilio home screen is HTML too. React loads that larger page inside an iframe; here, we are creating a much smaller page ourselves.',
+        source: '../app/page.tsx',
+        file: 'HTML',
+        starters: {
+          html: '<!-- Start here: add a main element, a heading, and a paragraph. -->',
+          css: '/* CSS is for appearance. We will use it in lesson 2. */',
+          js: '// JavaScript adds behavior. We will use it in lesson 3.'
+        },
+        checks: [
+          ['html', '<main', 'Add a <main> element.'],
+          ['html', '<h1', 'Add an <h1> heading inside your main content.'],
+          ['html', '<p', 'Add a <p> paragraph explaining your planner.']
+        ],
+        hints: {
+          html: 'Try typing: <main>, then an <h1>...</h1> and a <p>...</p>, then close with </main>.',
+          css: 'CSS rules go in this file. For example: body { font-family: sans-serif; }',
+          js: 'JavaScript goes in this file. A line starting with // is a comment for humans.'
+        }
+      },
+      {
+        title: '2. Make a card with CSS',
+        short: 'CSS: change how it looks',
+        goal: 'Give your planner a readable, centered card.',
+        tasks: [
+          'Use the HTML tab and wrap your heading and paragraph in an element with class="card".',
+          'Use the CSS tab to write a .card rule.',
+          'Set padding, a background color, and rounded corners.',
+          'Run the preview and notice: HTML supplies the class; CSS selects it with a dot.'
+        ],
+        concept: 'CSS styles HTML. The selector .card means “find elements whose class is card.”',
+        reference: 'Resilio also uses CSS classes like .card and .builder to style its screens. The original styles are near the top of public/resilio.html.',
+        source: '../public/resilio.html',
+        file: 'CSS',
+        starters: {
+          html: '<main class="card">\n  <h1>My planner</h1>\n  <p>A small page I am building myself.</p>\n</main>',
+          css: '/* Add a .card rule. Try padding, background, and border-radius. */',
+          js: '// We will make this page interactive in the next lesson.'
+        },
+        checks: [
+          ['html', 'class="card"', 'Add class="card" to an HTML element.'],
+          ['css', '.card', 'Add a .card selector in your CSS.'],
+          ['css', 'padding', 'Give the card some padding.']
+        ],
+        hints: {
+          html: 'Put class="card" inside an opening tag, like <main class="card">.',
+          css: 'Start a rule with .card { and put CSS properties inside the braces.',
+          js: 'No JavaScript is needed yet. Focus on the class and matching CSS selector.'
+        }
+      },
+      {
+        title: '3. Make a button respond',
+        short: 'JavaScript: react to a click',
+        goal: 'Add a button that changes a number when clicked.',
+        tasks: [
+          'In HTML, add a button with id="addButton".',
+          'Add an element with id="count" that starts with 0.',
+          'In JavaScript, create a variable for the count.',
+          'Find the button and listen for a click; update the number on screen.'
+        ],
+        concept: 'JavaScript can find HTML elements and respond to events. An event listener runs a function when something happens, like a click.',
+        reference: 'Resilio uses addEventListener and onclick throughout its main page to respond to buttons and form inputs.',
+        source: '../public/resilio.html',
+        file: 'JavaScript',
+        starters: {
+          html: '<main class="card">\n  <h1>My click counter</h1>\n  <p>Clicks: <strong id="count">0</strong></p>\n  <!-- Add your button here -->\n</main>',
+          css: 'body { font-family: sans-serif; padding: 24px; }\n.card { max-width: 480px; margin: 20px auto; padding: 20px; background: #eef4ed; border-radius: 14px; }',
+          js: '// 1. Create a variable called count and set it to 0.\n// 2. Find the button and the count display.\n// 3. Add a click listener that adds 1 and updates the display.'
+        },
+        checks: [
+          ['html', 'id="addButton"', 'Add a button with id="addButton".'],
+          ['html', 'id="count"', 'Keep an element with id="count" to display the number.'],
+          ['js', 'addEventListener', 'Use addEventListener to handle a click.'],
+          ['js', 'textContent', 'Update the displayed number with textContent.']
+        ],
+        hints: {
+          html: 'A button looks like <button id="addButton">Add one</button>.',
+          css: 'Style the button using #addButton { ... } or a class selector.',
+          js: 'Use document.getElementById("addButton") to find the button. Then add a "click" event listener.'
+        }
+      },
+      {
+        title: '4. Calculate a simple total',
+        short: 'JavaScript: use inputs and math',
+        goal: 'Turn two inputs into a simple daily-use estimate.',
+        tasks: [
+          'Inspect the HTML: it has number inputs for watts and hours.',
+          'Use JavaScript to read their values when the button is clicked.',
+          'Calculate watts multiplied by hours.',
+          'Display the result. This is a math exercise, not equipment sizing or advice.'
+        ],
+        concept: 'Input elements store text-like values. Number(...) converts a value to a number so JavaScript can do arithmetic.',
+        reference: 'The full app separates planning equations into public/resilio-math.js and tests expected results in tests/resilio-math.test.cjs.',
+        source: '../public/resilio-math.js',
+        file: 'JavaScript',
+        starters: {
+          html: '<main class="card">\n  <h1>Daily-use math demo</h1>\n  <label>Example watts <input id="watts" type="number" value="10"></label>\n  <label>Example hours <input id="hours" type="number" value="2"></label>\n  <button id="calculate">Calculate example</button>\n  <p>Example total: <strong id="result">—</strong> watt-hours</p>\n</main>',
+          css: 'body { font-family: sans-serif; padding: 24px; }\n.card { display: grid; gap: 12px; max-width: 480px; margin: 20px auto; padding: 20px; background: #eef4ed; border-radius: 14px; }\ninput, button { padding: 8px; }',
+          js: '// Read both input values, multiply them, and display the result.\n// Math demo only: this does not size or recommend any equipment.'
+        },
+        checks: [
+          ['js', 'getElementById', 'Use getElementById to find page elements.'],
+          ['js', 'Number(', 'Convert input values to numbers with Number(...).'],
+          ['js', 'addEventListener', 'Run the calculation from a button click.'],
+          ['js', 'textContent', 'Show the answer by updating textContent.']
+        ],
+        hints: {
+          html: 'The number inputs already have IDs. JavaScript can find them by those IDs.',
+          css: 'The form can be styled with label, input, and button selectors.',
+          js: 'Read an input with Number(document.getElementById("watts").value). Multiply the two numbers.'
+        }
+      }
+    ];
+
+    const lessonList = document.querySelector('#lessonList');
+    const editor = document.querySelector('#codeEditor');
+    const tabs = {
+      html: document.querySelector('#tabHtml'),
+      css: document.querySelector('#tabCss'),
+      js: document.querySelector('#tabJs')
+    };
+    const editors = Object.fromEntries(Object.keys(tabs).map((file) => [file, '']));
+    const lessonDrafts = lessons.map((lesson) => ({ ...lesson.starters }));
+    const savedStateKey = 'resilio-coding-classroom-v1';
+    let activeLesson = 0;
+    let activeFile = 'html';
+
+    function setFeedback(message, isError = false) {
+      const feedback = document.querySelector('#feedback');
+      feedback.textContent = message;
+      feedback.style.color = isError ? '#9b332b' : '#176a58';
+    }
+
+    function saveDrafts() {
+      try {
+        localStorage.setItem(savedStateKey, JSON.stringify({ activeLesson, drafts: lessonDrafts }));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function restoreDrafts() {
+      try {
+        const savedText = localStorage.getItem(savedStateKey);
+        if (!savedText) return '';
+        const saved = JSON.parse(savedText);
+        if (!Array.isArray(saved.drafts) || saved.drafts.length !== lessons.length) {
+          throw new Error('Saved lesson data has the wrong format.');
+        }
+        saved.drafts.forEach((draft, index) => {
+          for (const file of Object.keys(tabs)) {
+            if (typeof draft?.[file] !== 'string') {
+              throw new Error(`Saved ${file.toUpperCase()} lesson ${index + 1} is invalid.`);
+            }
+          }
+        });
+        saved.drafts.forEach((draft, index) => Object.assign(lessonDrafts[index], draft));
+        if (Number.isInteger(saved.activeLesson) && saved.activeLesson >= 0 && saved.activeLesson < lessons.length) {
+          activeLesson = saved.activeLesson;
+        }
+        return '';
+      } catch (error) {
+        return `Saved code could not be restored (${error instanceof Error ? error.message : 'unknown storage error'}). Starter code is available; reset any lesson to begin again.`;
+      }
+    }
+
+    function renderLessonButtons() {
+      lessonList.replaceChildren();
+      lessons.forEach((lesson, index) => {
+        const button = document.createElement('button');
+        button.className = 'lesson-choice';
+        button.type = 'button';
+        button.setAttribute('aria-current', String(index === activeLesson ? 'step' : 'false'));
+        const title = document.createElement('strong');
+        title.textContent = lesson.title;
+        const summary = document.createElement('span');
+        summary.textContent = lesson.short;
+        button.append(title, summary);
+        button.addEventListener('click', () => loadLesson(index));
+        lessonList.append(button);
+      });
+    }
+
+    function switchFile(file, saveCurrent = true) {
+      if (saveCurrent && activeFile) {
+        editors[activeFile] = editor.value;
+        lessonDrafts[activeLesson][activeFile] = editor.value;
+      }
+      activeFile = file;
+      editor.value = editors[file];
+      document.querySelector('#editorLabel').textContent = `${file.toUpperCase()} file`;
+      document.querySelector('#fileDescription').textContent = {
+        html: 'Structure and content',
+        css: 'Colors, spacing, and layout',
+        js: 'Interactions and calculations'
+      }[file];
+      document.querySelector('#editorHint').textContent = lessons[activeLesson].hints[file];
+      Object.entries(tabs).forEach(([name, button]) => {
+        button.setAttribute('aria-selected', String(name === file));
+      });
+    }
+
+    function loadLesson(index, saveCurrent = true) {
+      if (saveCurrent && activeFile) {
+        editors[activeFile] = editor.value;
+        lessonDrafts[activeLesson][activeFile] = editor.value;
+      }
+      activeLesson = index;
+      Object.assign(editors, lessonDrafts[index]);
+      document.querySelector('#lessonTitle').textContent = lessons[index].title;
+      document.querySelector('#lessonGoal').textContent = lessons[index].goal;
+      document.querySelector('#lessonConcept').textContent = lessons[index].concept;
+      document.querySelector('#lessonReference').textContent = lessons[index].reference;
+      document.querySelector('#sourceLink').href = lessons[index].source;
+      const taskList = document.querySelector('#lessonTasks');
+      taskList.replaceChildren(...lessons[index].tasks.map((task) => {
+        const item = document.createElement('li');
+        item.textContent = task;
+        return item;
+      }));
+      setFeedback('Edit the code, run the preview, and check your work when you are ready.');
+      renderLessonButtons();
+      switchFile(({ HTML: 'html', CSS: 'css', JavaScript: 'js' })[lessons[index].file], false);
+      runPreview();
+      if (!saveDrafts()) {
+        setFeedback('Your lesson is open, but this browser cannot save code between visits. Keep this page open or copy your code before closing.', true);
+      }
+    }
+
+    function runPreview() {
+      editors[activeFile] = editor.value;
+      lessonDrafts[activeLesson][activeFile] = editor.value;
+      const html = editors.html;
+      const css = editors.css;
+      const js = editors.js.replace(/<\/script/gi, '<\\/script');
+      const preview = document.querySelector('#previewFrame');
+      preview.srcdoc = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <style>body{font:16px/1.5 system-ui,sans-serif;color:#183638;background:#fff;padding:22px}button,input{font:inherit}button{cursor:pointer}${css}</style>
+</head>
+<body>${html}<script>${js}<\/script></body>
+</html>`;
+    }
+
+    function checkLesson() {
+      editors[activeFile] = editor.value;
+      lessonDrafts[activeLesson][activeFile] = editor.value;
+      const missing = lessons[activeLesson].checks.find(([file, required]) => {
+        const source = editors[file].replace(/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\/|(^|\s)\/\/.*$/gm, '').toLowerCase();
+        return !source.includes(required.toLowerCase());
+      });
+      if (missing) {
+        setFeedback(`Not quite yet: ${missing[2]}`, true);
+      } else {
+        setFeedback('Nice work! You included the key pieces. Read the lesson explanation, then try changing something in your own style.');
+      }
+      if (!saveDrafts()) setFeedback('The lesson check ran, but this browser cannot save code between visits. Keep this page open or copy your code.', true);
+    }
+
+    Object.entries(tabs).forEach(([file, button]) => {
+      button.addEventListener('click', () => switchFile(file));
+    });
+    editor.addEventListener('input', () => {
+      editors[activeFile] = editor.value;
+      lessonDrafts[activeLesson][activeFile] = editor.value;
+      if (saveDrafts()) setFeedback('Code changed. Run the preview to see your latest version.');
+      else setFeedback('Your code changed, but this browser cannot save it between visits. Keep this page open or copy your code.', true);
+    });
+    document.querySelector('#runCode').addEventListener('click', runPreview);
+    document.querySelector('#checkLesson').addEventListener('click', checkLesson);
+    document.querySelector('#resetLesson').addEventListener('click', () => {
+      lessonDrafts[activeLesson] = { ...lessons[activeLesson].starters };
+      loadLesson(activeLesson, false);
+    });
+    document.querySelector('#nextLesson').addEventListener('click', () => {
+      if (activeLesson < lessons.length - 1) loadLesson(activeLesson + 1);
+      else setFeedback('You reached the end of this starter course. Try making your own variation!');
+    });
+
+    const restoreMessage = restoreDrafts();
+    loadLesson(activeLesson, false);
+    if (restoreMessage) setFeedback(restoreMessage, true);
+  </script>
+</body>
+</html>

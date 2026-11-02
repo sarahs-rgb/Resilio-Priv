@@ -1,0 +1,45 @@
+import { sql } from "drizzle-orm";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const researchSessions = sqliteTable("research_sessions", {
+  id: text("id").primaryKey(),
+  participantCode: text("participant_code").notNull(),
+  studyVersion: text("study_version").notNull().default("resilio-ap-v1"),
+  studyGroup: text("study_group").notNull().default("app"),
+  consentVersion: text("consent_version").notNull(),
+  consentedAt: text("consented_at").notNull(),
+  startedAt: text("started_at").notNull(),
+  completedAt: text("completed_at").notNull(),
+  completionSeconds: integer("completion_seconds").notNull(),
+  confidenceBefore: integer("confidence_before").notNull(),
+  confidenceAfter: integer("confidence_after").notNull(),
+  deviceCount: integer("device_count").notNull(),
+  dailyWh: real("daily_wh").notNull(),
+  backupDays: real("backup_days").notNull(),
+  peakSunHours: real("peak_sun_hours").notNull(),
+  usableCapacityPercent: real("usable_capacity_assumption_percent").notNull(),
+  efficiencyPercent: real("efficiency_assumption_percent").notNull(),
+  planningMarginPercent: real("planning_margin_percent").notNull(),
+  systemVoltageV: real("system_voltage_v").notNull(),
+  batteryWh: real("battery_wh").notNull(),
+  batteryChargePercent: real("battery_charge_percent").notNull(),
+  storedEnergyWh: real("stored_energy_wh").notNull(),
+  remainingUsableWh: real("remaining_usable_wh").notNull(),
+  estimatedRuntimeHours: real("estimated_runtime_hours").notNull(),
+  solarW: real("solar_w").notNull(),
+  energyMix: text("energy_mix").notNull().default("solar"),
+  windSharePercent: real("wind_share_percent").notNull().default(0),
+  windCapacityFactorPercent: real("wind_capacity_factor_percent").notNull().default(15),
+  windW: real("wind_w").notNull().default(0),
+  batteryAh: real("battery_ah").notNull(),
+  estimatedRechargeHours: real("estimated_empty_to_full_peak_sun_hours").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const usageEvents = sqliteTable("usage_events", {
+  id: text("id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  appVersion: text("app_version").notNull(),
+  occurredAt: text("occurred_at").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
